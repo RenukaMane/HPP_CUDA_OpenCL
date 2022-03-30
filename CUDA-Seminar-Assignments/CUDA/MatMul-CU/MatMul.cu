@@ -2,10 +2,10 @@
 
 //cuda headers
 #include <cuda.h>
-#include <helper-timer.h>
+#include "helper_timer.h"
 
 //macros
-#define BLOCK_WIDTH 32
+#define BLOCK_WIDTH 1032
 
 //global variables
 int *hostA = NULL;
@@ -49,7 +49,7 @@ int main()
     // function declarations
     void InitA(int *data,int,int);
     void InitB(int *data,int,int);
-    void matmulCPU(int *, int *, int *, int, int, int, int);
+    void matMulCPU(int *, int *, int *, int, int, int, int);
     void cleanup(void);
 
     // variable declaration
@@ -113,7 +113,7 @@ int main()
     printf("Size of Matrix hostA = %d\n",sizeA);
     printf("Size of Matrix hostB = %d\n",sizeB);
     printf("Size of Matrix hostC = %d\n",sizeC);
-    printf("Size of Matrix gold = %d\n",gold);
+    printf("Size of Matrix gold = %d\n",sizeGold);
 
     // fill source matrices
     InitA(hostA,numARows,numAColumns);
@@ -153,7 +153,7 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    result = cudaMemcpy(deviceB, hostB, size, cudaMemcpyHostToDevice);
+    result = cudaMemcpy(deviceB, hostB, sizeB, cudaMemcpyHostToDevice);
     if (result != cudaSuccess)
     {
         printf("Host to Device Data Copy is failed for deviceB array.\n");
@@ -162,7 +162,7 @@ int main()
     }
 
     // CUDA Kernel configuration
-    dim3 dimGrid = dim3(ceil((int)numBColums / (int)BLOCK_WIDTH), ceil((int)numARows / (int)BLOCK_WIDTH), 1);
+    dim3 dimGrid = dim3(ceil((int)numBColumns / (int)BLOCK_WIDTH), ceil((int)numARows / (int)BLOCK_WIDTH), 1);
     dim3 dimBlock = dim3(BLOCK_WIDTH, BLOCK_WIDTH, 1);
 
     // cuda kernel for Matrix Multiplication
@@ -170,10 +170,10 @@ int main()
     sdkCreateTimer(&timer);
     sdkStartTimer(&timer);
 
-    matMulGPU <<<dimGrid, dimBlock >>>(deviceA,deviceB,deviceC,numARows,numAColumns,numBColums,numCColumns);
+    matMulGPU <<<dimGrid, dimBlock >>>(deviceA,deviceB,deviceC,numARows,numAColumns,numBColumns,numCColumns);
 
     sdkStopTimer(&timer);
-    timeOnGPU = sdkGetTimer(&timer);
+    timeOnGPU = sdkGetTimerValue(&timer);
     timer = NULL;
 
     // copy data from Device to Host
@@ -186,7 +186,7 @@ int main()
     }
     
     // matrix multiplication on host
-    matmulCPU(hostA, hostB, gold, numARows, numAcolumns, numBColumns, numCColumns);
+    matMulCPU(hostA, hostB, gold, numARows, numAColumns, numBColumns, numCColumns);
 
     // comparison
     int breakValue = -1;
@@ -253,7 +253,7 @@ void InitB(int *data,int row,int col)
     }
 }
 
-void matMulCPU(int* A, int* B, int* C, int numARows, int numAColumns, int numBRows, int numCColums)
+void matMulCPU(int* A, int* B, int* C, int numARows, int numAColumns, int numBColumns, int numCColums)
 {
     // code
     StopWatchInterface* timer = NULL;
@@ -276,7 +276,7 @@ void matMulCPU(int* A, int* B, int* C, int numARows, int numAColumns, int numBRo
     }
 
     sdkStopTimer(&timer);
-    timeOnCPU = sdkGetTimer(&timer);
+    timeOnCPU = sdkGetTimerValue(&timer);
     timer = NULL;
 }
 
