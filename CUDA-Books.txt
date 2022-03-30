@@ -1,0 +1,14 @@
+CUDA Books
+
+1. Programming massively parallel processors -David Kirk and WeinMei Hu
+2. CUDA VIA Example -Jason Sanders
+3. CUDA Handbook -Nikolas Wile
+4. CUDA Programming -Shane Cook
+5. GPU Computing Gems (2 bks) -Emerald Edition
+                              -Jade Edition
+
+OpenCL Books
+
+1. OpenCL programming guide -Aftaf Munshi
+2. Heterogenous computing by/with OpenCL -David Keli
+					 -Perhard Mistri

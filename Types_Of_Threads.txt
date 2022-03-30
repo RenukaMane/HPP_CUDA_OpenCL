@@ -1,0 +1,5 @@
+System Threads - actual extension to kernel thread(software threads)
+library Threads - 1. pthread      (takes help from OS to create threads) (much faster as compared to JAVA)
+                  2. Java thread  (takes help from JVM) (Green Threads)
+Hardware Threads - 1. H/W threads CPU
+                   2. H/W threads GPU
