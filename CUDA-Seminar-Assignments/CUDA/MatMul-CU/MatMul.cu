@@ -114,4 +114,215 @@ int main()
     printf("Size of Matrix hostB = %d\n",sizeB);
     printf("Size of Matrix hostC = %d\n",sizeC);
     printf("Size of Matrix gold = %d\n",gold);
+
+    // fill source matrices
+    InitA(hostA,numARows,numAColumns);
+    InitB(hostB,numBRows,numBColumns);
+
+    // device memory allocation
+    result = cudaMalloc((void**)&deviceA,sizeA);
+    if (result != cudaSuccess)
+    {
+        printf("Device Memory allocation is failed for deviceA matrix.\n");
+        cleanup();
+        exit(EXIT_FAILURE);
+    }
+
+    result = cudaMalloc((void**)&deviceB,sizeB);
+    if (result != cudaSuccess)
+    {
+        printf("Device Memory allocation is failed for deviceB array.\n");
+        cleanup();
+        exit(EXIT_FAILURE);
+    }
+
+    result = cudaMalloc((void**)&deviceC,sizeC);
+    if (result != cudaSuccess)
+    {
+        printf("Device Memory allocation is failed for deviceC array.\n");
+        cleanup();
+        exit(EXIT_FAILURE);
+    }
+
+    //copy data from host matrices into device matrices
+    result = cudaMemcpy(deviceA, hostA, sizeA, cudaMemcpyHostToDevice);
+    if (result != cudaSuccess)
+    {
+        printf("Host to Device Data Copy is failed for deviceA matrix.\n");
+        cleanup();
+        exit(EXIT_FAILURE);
+    }
+
+    result = cudaMemcpy(deviceB, hostB, size, cudaMemcpyHostToDevice);
+    if (result != cudaSuccess)
+    {
+        printf("Host to Device Data Copy is failed for deviceB array.\n");
+        cleanup();
+        exit(EXIT_FAILURE);
+    }
+
+    // CUDA Kernel configuration
+    dim3 dimGrid = dim3(ceil((int)numBColums / (int)BLOCK_WIDTH), ceil((int)numARows / (int)BLOCK_WIDTH), 1);
+    dim3 dimBlock = dim3(BLOCK_WIDTH, BLOCK_WIDTH, 1);
+
+    // cuda kernel for Matrix Multiplication
+    StopWatchInterface* timer = NULL;
+    sdkCreateTimer(&timer);
+    sdkStartTimer(&timer);
+
+    matMulGPU <<<dimGrid, dimBlock >>>(deviceA,deviceB,deviceC,numARows,numAColumns,numBColums,numCColumns);
+
+    sdkStopTimer(&timer);
+    timeOnGPU = sdkGetTimer(&timer);
+    timer = NULL;
+
+    // copy data from Device to Host
+    result = cudaMemcpy(hostC, deviceC, sizeC, cudaMemcpyDeviceToHost);
+    if (result != cudaSuccess)
+    {
+        printf("Device to Host Data copy is failed for deviceC array.\n");
+        cleanup();
+        exit(EXIT_FAILURE);
+    }
+    
+    // matrix multiplication on host
+    matmulCPU(hostA, hostB, gold, numARows, numAcolumns, numBColumns, numCColumns);
+
+    // comparison
+    int breakValue = -1;
+    bool bAccuracy = true;
+    for (int i = 0; i < numCRows * numCColumns; i++)
+    {
+        int val1 = gold[i];
+        int val2 = hostC[i];
+        if (val1 != val2)
+        {
+            breakValue = i;
+            bAccuracy = false;
+            break;
+        }
+    }
+
+    char str[128];
+    if(bAccuracy != true)
+    {
+        sprintf(str,"Comparison of CPU and GPU Matrix Multiplication is not accurate at array index %d",breakValue);
+    }
+    else
+    {
+        sprintf(str,"Comparison of CPU and GPU Matrix Multiplication is accurate");
+    }
+
+    printf("Time taken for Matrix Multiplication on CPU = %.6f\n",timeOnCPU);
+    printf("Time taken for Matrix Multiplication on GPU = %.6f\n",timeOnGPU);
+    printf("%s\n",str);
+
+    // cleanup
+    cleanup();
+
+    return (0);
+}
+
+void InitA(int *data,int row,int col)
+{
+    int num = 1;
+
+    //code
+    for(int i = 0;i < row; i++)
+    {
+        for(int j = 0; j < col; j++)
+        {
+            *(data + i * row + j) = num;
+            num++;
+        }
+    }
+}
+
+void InitB(int *data,int row,int col)
+{
+    int num = BLOCK_WIDTH;
+    
+    // code
+    for (int i = 0; i < row; i++)
+    {
+        for(int j = 0; j < col; j++)
+        {
+            *(data + i * row + j) = num;
+            num++;
+        }
+    }
+}
+
+void matMulCPU(int* A, int* B, int* C, int numARows, int numAColumns, int numBRows, int numCColums)
+{
+    // code
+    StopWatchInterface* timer = NULL;
+    sdkCreateTimer(&timer);
+    sdkStartTimer(&timer);
+        
+    for (int i = 0; i < numARows; i++)
+    {
+        for (int j = 0; j < numBColumns; j++)
+        {   
+            int val = 0;
+            for(int k = 0; k < numAColumns; k++)
+            {
+                int a = A[i * numAColumns + k];
+                int b = B[k * numBColumns + j];
+                val += a*b;
+            }
+            C[i* numCColums + j] = val;
+        }
+    }
+
+    sdkStopTimer(&timer);
+    timeOnCPU = sdkGetTimer(&timer);
+    timer = NULL;
+}
+
+void cleanup(void)
+{
+    // code
+    if(deviceC)
+    {
+        cudaFree(deviceC);
+        deviceC = NULL;
+    }
+
+    if(deviceB)
+    {
+        cudaFree(deviceB);
+        deviceB = NULL;
+    }
+
+    if(deviceA)
+    {
+        cudaFree(deviceA);
+        deviceA = NULL;
+    }
+
+    if(gold)
+    {
+        cudaFree(gold);
+        gold = NULL;
+    }
+
+    if(hostC)
+    {
+        cudaFree(hostC);
+        hostC = NULL;
+    }
+
+    if(hostB)
+    {
+        cudaFree(hostB);
+        hostB = NULL;
+    }
+
+    if(hostA)
+    {
+        cudaFree(hostA);
+        hostA = NULL;
+    }
+
 }
