@@ -1,4 +1,4 @@
-cl.exe /EHsc /I "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include" HelloOpenCL.c /link "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64\OpenCL.lib"
+cl.exe /EHsc /I "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include" VecAdd.cpp /link "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64\OpenCL.lib"
 Include Directory - "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include"
-Lib Directory - "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64"
+Lib Directory - "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64\OpenCL.lib"
 Syste32 - OpenCL.dll
